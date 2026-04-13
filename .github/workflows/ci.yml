@@ -21,6 +21,12 @@ jobs:
       - name: Install Poetry
         run: pip install poetry==1.8.3
 
+      - name: Cache virtualenv
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ hashFiles('poetry.lock', 'pyproject.toml') }}
+
       - name: Install dependencies
         run: poetry install
 
@@ -41,6 +47,12 @@ jobs:
 
       - name: Install Poetry
         run: pip install poetry==1.8.3
+
+      - name: Cache virtualenv
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ hashFiles('poetry.lock', 'pyproject.toml') }}
 
       - name: Install dependencies
         run: poetry install
