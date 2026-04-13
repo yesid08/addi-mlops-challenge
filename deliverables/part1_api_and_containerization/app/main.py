@@ -1,7 +1,7 @@
 import logging
 import os
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import AsyncIterator
 
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
@@ -27,6 +27,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # Import the graph inside lifespan so that .env is loaded before ChatOpenAI
     # reads OPENAI_API_KEY at instantiation time.
     from langgraph.checkpoint.memory import MemorySaver  # noqa: PLC0415
+
     from source.application.graph import workflow  # noqa: PLC0415
 
     checkpointer = MemorySaver()
@@ -60,8 +61,8 @@ def create_app() -> FastAPI:
     app.add_middleware(RequestLoggingMiddleware)
     app.add_middleware(CorrelationIdMiddleware)
 
-    app.add_exception_handler(RequestValidationError, validation_error_handler)
-    app.add_exception_handler(Exception, general_error_handler)
+    app.add_exception_handler(RequestValidationError, validation_error_handler)  # type: ignore[arg-type]
+    app.add_exception_handler(Exception, general_error_handler)  # type: ignore[arg-type]
 
     app.include_router(health.router)
     app.include_router(chat.router)

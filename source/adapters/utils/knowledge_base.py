@@ -56,7 +56,12 @@ SCENARIO_KNOWLEDGE_BASE: dict = {
                 "respuesta_sugerida": "Tenemos muchos productos disponibles.",
             },
         ],
-        "variables": ["primer_nombre", "purchase_history", "user_category_preferences", "available_promotions"],
+        "variables": [
+            "primer_nombre",
+            "purchase_history",
+            "user_category_preferences",
+            "available_promotions",
+        ],
     },
     "CUENTA": {
         "responsible_agent": "handle_general",
@@ -69,7 +74,14 @@ SCENARIO_KNOWLEDGE_BASE: dict = {
                 "respuesta_sugerida": "Puedo ayudarte con tu cuenta.",
             },
         ],
-        "variables": ["primer_nombre", "email", "phone", "email_verified", "phone_verified", "account_status"],
+        "variables": [
+            "primer_nombre",
+            "email",
+            "phone",
+            "email_verified",
+            "phone_verified",
+            "account_status",
+        ],
     },
     "DEVOLUCIONES": {
         "responsible_agent": "handle_general",

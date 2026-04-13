@@ -1,5 +1,4 @@
-from typing import Dict, Any, List, Optional
-
+from typing import Any
 
 MANDATORY_FIELDS = [
     "primer_nombre",
@@ -9,9 +8,9 @@ MANDATORY_FIELDS = [
 
 
 def filter_user_data(
-    user_data: Optional[Dict[str, Any]],
-    relevant_fields: List[str],
-) -> Dict[str, Any]:
+    user_data: dict[str, Any] | None,
+    relevant_fields: list[str],
+) -> dict[str, Any]:
     """
     Filter user_data to only include fields relevant to the current topic,
     plus mandatory base fields that are always needed.

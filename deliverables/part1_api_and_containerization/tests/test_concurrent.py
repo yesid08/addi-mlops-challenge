@@ -7,6 +7,7 @@ isolated between conversations, and no request is lost or garbled.
 
 The four concurrent users map to user_001 through user_004 from mock_data.
 """
+
 import asyncio
 import os
 from unittest.mock import AsyncMock, MagicMock
@@ -18,6 +19,7 @@ os.environ.setdefault("OPENAI_API_KEY", "sk-test-fake-key-for-tests")
 
 
 # ── Fixture ───────────────────────────────────────────────────────────────────
+
 
 @pytest.fixture
 def concurrent_app():
@@ -56,6 +58,7 @@ async def _chat(client: AsyncClient, user_id: str, conv_suffix: str, message: st
 
 # ── Tests ─────────────────────────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_four_concurrent_requests_all_succeed(concurrent_app):
     """All four simultaneous requests return HTTP 200."""
@@ -77,7 +80,10 @@ async def test_four_concurrent_responses_routed_to_correct_user(concurrent_app):
         transport=ASGITransport(app=concurrent_app), base_url="http://test"
     ) as client:
         responses = await asyncio.gather(
-            *[_chat(client, uid, "routing", "¿Cuál es mi pedido?") for uid in FOUR_USERS]
+            *[
+                _chat(client, uid, "routing", "¿Cuál es mi pedido?")
+                for uid in FOUR_USERS
+            ]
         )
 
     for user_id, resp in zip(FOUR_USERS, responses):

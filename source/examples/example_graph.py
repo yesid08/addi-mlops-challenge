@@ -5,32 +5,37 @@ Minimal LangGraph graph — run this to verify your environment is set up correc
 
 If you see a greeting and "Setup is working!", your dependencies and API key are good.
 """
+
 import asyncio
 import os
 import sys
-from typing import Any, Dict
+from typing import Any
 
-project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+project_root = os.path.dirname(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+)
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 from dotenv import load_dotenv
+
 load_dotenv(os.path.join(project_root, ".env"))
 
-from langgraph.graph import StateGraph, END
 from langgraph.checkpoint.memory import MemorySaver
-from source.application.state import GraphState
+from langgraph.graph import END, StateGraph
+
 from source.adapters.utils.mock_data import MOCK_USERS
+from source.application.state import GraphState
 
 
-async def fetch_user(state: GraphState) -> Dict[str, Any]:
+async def fetch_user(state: GraphState) -> dict[str, Any]:
     """Fetch user data from mock store."""
     state["flow"].append("fetch_user")
     user_data = MOCK_USERS.get(state.get("user_id", "user_001"), {})
     return {"user_data": user_data, "user_data_summary": user_data}
 
 
-async def greet(state: GraphState) -> Dict[str, Any]:
+async def greet(state: GraphState) -> dict[str, Any]:
     """Simple greeting using user data — no LLM call needed for this demo."""
     state["flow"].append("greet")
     name = state.get("user_data", {}).get("primer_nombre", "amigo")
@@ -48,6 +53,7 @@ example_workflow.add_edge("greet", END)
 
 
 if __name__ == "__main__":
+
     async def main():
         checkpointer = MemorySaver()
         graph = example_workflow.compile(checkpointer=checkpointer)

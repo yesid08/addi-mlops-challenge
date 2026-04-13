@@ -20,7 +20,27 @@ uvicorn = {extras = ["standard"], version = "^0.32.0"}
 pytest = "^8.3.5"
 pytest-asyncio = "^0.25.3"
 httpx = "^0.28.1"
+ruff = "^0.9"
+mypy = "^1.14"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+target-version = "py310"
+line-length = 88
+exclude = [".venv", "__pycache__", "*.egg-info", "source/examples", "tests/inline.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+# OPENAI_API_KEY env var must be set before app.schemas is imported (Settings() at module level)
+"deliverables/part1_api_and_containerization/tests/test_schemas.py" = ["E402"]
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+strict = false

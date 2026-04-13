@@ -5,6 +5,7 @@ The LLM chain is mocked so no OpenAI key is required, but the graph itself is
 compiled and executed — both nodes run in the correct order through LangGraph's
 state machine.
 """
+
 import os
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -16,8 +17,8 @@ from langgraph.checkpoint.memory import MemorySaver
 
 from source.application.graph import workflow
 
-
 # ── Fixtures ──────────────────────────────────────────────────────────────────
+
 
 @pytest.fixture(scope="module")
 def compiled_graph():
@@ -55,10 +56,13 @@ def _graph_input(user_id: str = "user_001", question: str = "Hola") -> dict:
 
 # ── Tests ─────────────────────────────────────────────────────────────────────
 
+
 class TestFullGraphFlow:
     @pytest.mark.asyncio
     async def test_both_nodes_appear_in_flow(self, compiled_graph):
-        with patch("source.domain.handle_general.get_general_chain", return_value=_mock_chain()):
+        with patch(
+            "source.domain.handle_general.get_general_chain", return_value=_mock_chain()
+        ):
             result = await compiled_graph.ainvoke(
                 _graph_input(user_id="user_001"),
                 config={"configurable": {"thread_id": "it-flow-1"}},
@@ -69,7 +73,9 @@ class TestFullGraphFlow:
 
     @pytest.mark.asyncio
     async def test_nodes_execute_in_order(self, compiled_graph):
-        with patch("source.domain.handle_general.get_general_chain", return_value=_mock_chain()):
+        with patch(
+            "source.domain.handle_general.get_general_chain", return_value=_mock_chain()
+        ):
             result = await compiled_graph.ainvoke(
                 _graph_input(user_id="user_001"),
                 config={"configurable": {"thread_id": "it-order-1"}},
@@ -94,7 +100,9 @@ class TestFullGraphFlow:
 
     @pytest.mark.asyncio
     async def test_user_data_fetched_for_known_user(self, compiled_graph):
-        with patch("source.domain.handle_general.get_general_chain", return_value=_mock_chain()):
+        with patch(
+            "source.domain.handle_general.get_general_chain", return_value=_mock_chain()
+        ):
             result = await compiled_graph.ainvoke(
                 _graph_input(user_id="user_001"),
                 config={"configurable": {"thread_id": "it-user-1"}},
@@ -104,7 +112,9 @@ class TestFullGraphFlow:
 
     @pytest.mark.asyncio
     async def test_unknown_user_produces_empty_user_data(self, compiled_graph):
-        with patch("source.domain.handle_general.get_general_chain", return_value=_mock_chain()):
+        with patch(
+            "source.domain.handle_general.get_general_chain", return_value=_mock_chain()
+        ):
             result = await compiled_graph.ainvoke(
                 _graph_input(user_id="user_999"),
                 config={"configurable": {"thread_id": "it-unknown-1"}},
@@ -117,7 +127,9 @@ class TestFullGraphFlow:
         broken_chain = MagicMock()
         broken_chain.ainvoke = AsyncMock(side_effect=RuntimeError("LLM unavailable"))
 
-        with patch("source.domain.handle_general.get_general_chain", return_value=broken_chain):
+        with patch(
+            "source.domain.handle_general.get_general_chain", return_value=broken_chain
+        ):
             result = await compiled_graph.ainvoke(
                 _graph_input(user_id="user_001"),
                 config={"configurable": {"thread_id": "it-err-1"}},
@@ -128,7 +140,9 @@ class TestFullGraphFlow:
     @pytest.mark.asyncio
     async def test_different_users_get_correct_data(self, compiled_graph):
         """Run two sequential invocations for different users; each gets their own data."""
-        with patch("source.domain.handle_general.get_general_chain", return_value=_mock_chain()):
+        with patch(
+            "source.domain.handle_general.get_general_chain", return_value=_mock_chain()
+        ):
             result_001 = await compiled_graph.ainvoke(
                 _graph_input(user_id="user_001"),
                 config={"configurable": {"thread_id": "it-multi-1"}},
@@ -138,4 +152,7 @@ class TestFullGraphFlow:
                 config={"configurable": {"thread_id": "it-multi-2"}},
             )
 
-        assert result_001["user_data"]["primer_nombre"] != result_002["user_data"]["primer_nombre"]
+        assert (
+            result_001["user_data"]["primer_nombre"]
+            != result_002["user_data"]["primer_nombre"]
+        )

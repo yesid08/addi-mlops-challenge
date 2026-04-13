@@ -106,9 +106,7 @@ async def test_history_persists_across_turns(async_client):
         )
         assert resp.status_code == 200
 
-    history_resp = await async_client.get(
-        "/chat/conversations/persist-test/history"
-    )
+    history_resp = await async_client.get("/chat/conversations/persist-test/history")
     assert history_resp.status_code == 200
     data = history_resp.json()
     assert data["turn_count"] == 2
@@ -129,7 +127,11 @@ async def test_delete_history(async_client):
     # Populate history
     await async_client.post(
         "/chat",
-        json={"user_id": "user_002", "conversation_id": "delete-test", "message": "Hola"},
+        json={
+            "user_id": "user_002",
+            "conversation_id": "delete-test",
+            "message": "Hola",
+        },
     )
     # Clear it
     del_resp = await async_client.delete("/chat/conversations/delete-test/history")

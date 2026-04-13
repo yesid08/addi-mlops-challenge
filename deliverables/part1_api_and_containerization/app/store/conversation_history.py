@@ -1,6 +1,6 @@
 import threading
 from collections import defaultdict
-from typing import Any, Dict, List
+from typing import Any
 
 
 class ConversationHistoryStore:
@@ -14,11 +14,11 @@ class ConversationHistoryStore:
     """
 
     def __init__(self, max_messages: int = 50) -> None:
-        self._store: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+        self._store: dict[str, list[dict[str, Any]]] = defaultdict(list)
         self._lock = threading.Lock()
         self._max = max_messages
 
-    def get(self, conversation_id: str) -> List[Dict[str, Any]]:
+    def get(self, conversation_id: str) -> list[dict[str, Any]]:
         """Return a copy of the message history for a conversation."""
         with self._lock:
             return list(self._store[conversation_id])
@@ -42,7 +42,7 @@ class ConversationHistoryStore:
         with self._lock:
             self._store.pop(conversation_id, None)
 
-    def list_conversations(self) -> List[str]:
+    def list_conversations(self) -> list[str]:
         """Return all known conversation IDs."""
         with self._lock:
             return list(self._store.keys())

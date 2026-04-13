@@ -7,12 +7,13 @@ fields into the state automatically.
 
 Your domain functions should follow this pattern.
 """
-from typing import Any, Dict
+
+from typing import Any
 
 from source.application.state import GraphState
 
 
-async def example_agent(state: GraphState) -> Dict[str, Any]:
+async def example_agent(state: GraphState) -> dict[str, Any]:
     """
     Skeleton of a graph node. Replace with your actual implementation.
 

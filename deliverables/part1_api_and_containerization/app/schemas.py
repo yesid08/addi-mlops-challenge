@@ -1,5 +1,4 @@
 import re
-from typing import Optional
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -40,7 +39,7 @@ class ChatResponse(BaseModel):
 
 class ErrorResponse(BaseModel):
     error: str
-    detail: Optional[str] = None
+    detail: str | None = None
     correlation_id: str
 
 

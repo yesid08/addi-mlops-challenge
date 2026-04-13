@@ -1,4 +1,3 @@
-
 import os
 
 import pytest
@@ -6,7 +5,7 @@ from pydantic import ValidationError
 
 os.environ.setdefault("OPENAI_API_KEY", "sk-test-fake-key-for-tests")
 
-from app.schemas import ChatRequest  # noqa: E402
+from app.schemas import ChatRequest
 
 
 def test_valid_request():
@@ -59,7 +58,5 @@ def test_invalid_conversation_id_special_chars():
 
 
 def test_valid_conversation_id_with_hyphens_and_underscores():
-    req = ChatRequest(
-        user_id="user_001", conversation_id="conv_1-abc", message="Hola"
-    )
+    req = ChatRequest(user_id="user_001", conversation_id="conv_1-abc", message="Hola")
     assert req.conversation_id == "conv_1-abc"

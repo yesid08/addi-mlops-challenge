@@ -115,7 +115,9 @@ async def post_chat(request: Request, body: ChatRequest) -> ChatResponse:
     "/conversations/{conversation_id}/history",
     response_model=ConversationHistoryResponse,
 )
-async def get_history(conversation_id: str, request: Request) -> ConversationHistoryResponse:
+async def get_history(
+    conversation_id: str, request: Request
+) -> ConversationHistoryResponse:
     history_store = request.app.state.history_store
     messages = history_store.get(conversation_id)
     return ConversationHistoryResponse(

@@ -4,6 +4,7 @@ Unit tests for domain functions and adapters.
 No real LLM calls are made — the chain is replaced with an AsyncMock so tests
 run without an OpenAI key and return in milliseconds.
 """
+
 import os
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -15,8 +16,8 @@ from source.adapters.utils.data_filter import filter_user_data
 from source.domain.fetch_user_data import fetch_user_data
 from source.domain.handle_general import handle_general
 
-
 # ── Helpers ──────────────────────────────────────────────────────────────────
+
 
 def _base_state(**overrides):
     state = {
@@ -34,6 +35,7 @@ def _base_state(**overrides):
 
 
 # ── fetch_user_data ───────────────────────────────────────────────────────────
+
 
 class TestFetchUserData:
     @pytest.mark.asyncio
@@ -79,6 +81,7 @@ class TestFetchUserData:
 
 # ── handle_general ────────────────────────────────────────────────────────────
 
+
 def _mock_chain(respuesta: str = "Respuesta de prueba") -> MagicMock:
     response = MagicMock()
     response.respuesta_final = respuesta
@@ -91,11 +94,17 @@ class TestHandleGeneral:
     @pytest.mark.asyncio
     async def test_returns_generation_from_chain(self):
         state = _base_state(
-            user_data={"primer_nombre": "Carlos", "account_status": "active", "orders": []}
+            user_data={
+                "primer_nombre": "Carlos",
+                "account_status": "active",
+                "orders": [],
+            }
         )
         mock_chain = _mock_chain("Hola Carlos, ¿en qué te puedo ayudar?")
 
-        with patch("source.domain.handle_general.get_general_chain", return_value=mock_chain):
+        with patch(
+            "source.domain.handle_general.get_general_chain", return_value=mock_chain
+        ):
             result = await handle_general(state)
 
         assert result["generation"] == "Hola Carlos, ¿en qué te puedo ayudar?"
@@ -103,9 +112,15 @@ class TestHandleGeneral:
     @pytest.mark.asyncio
     async def test_appends_node_name_to_flow(self):
         state = _base_state(
-            user_data={"primer_nombre": "Carlos", "account_status": "active", "orders": []}
+            user_data={
+                "primer_nombre": "Carlos",
+                "account_status": "active",
+                "orders": [],
+            }
         )
-        with patch("source.domain.handle_general.get_general_chain", return_value=_mock_chain()):
+        with patch(
+            "source.domain.handle_general.get_general_chain", return_value=_mock_chain()
+        ):
             await handle_general(state)
 
         assert "handle_general" in state["flow"]
@@ -115,11 +130,17 @@ class TestHandleGeneral:
         state = _base_state(
             question="¿Cuál es mi pedido?",
             messages=[{"role": "user", "content": "Hola"}],
-            user_data={"primer_nombre": "Carlos", "account_status": "active", "orders": []},
+            user_data={
+                "primer_nombre": "Carlos",
+                "account_status": "active",
+                "orders": [],
+            },
         )
         mock_chain = _mock_chain()
 
-        with patch("source.domain.handle_general.get_general_chain", return_value=mock_chain):
+        with patch(
+            "source.domain.handle_general.get_general_chain", return_value=mock_chain
+        ):
             await handle_general(state)
 
         call_args = mock_chain.ainvoke.call_args[0][0]
@@ -129,11 +150,17 @@ class TestHandleGeneral:
     @pytest.mark.asyncio
     async def test_chain_receives_knowledge_base_and_user_data(self):
         state = _base_state(
-            user_data={"primer_nombre": "Carlos", "account_status": "active", "orders": []}
+            user_data={
+                "primer_nombre": "Carlos",
+                "account_status": "active",
+                "orders": [],
+            }
         )
         mock_chain = _mock_chain()
 
-        with patch("source.domain.handle_general.get_general_chain", return_value=mock_chain):
+        with patch(
+            "source.domain.handle_general.get_general_chain", return_value=mock_chain
+        ):
             await handle_general(state)
 
         call_args = mock_chain.ainvoke.call_args[0][0]
@@ -145,12 +172,18 @@ class TestHandleGeneral:
     @pytest.mark.asyncio
     async def test_returns_spanish_fallback_on_chain_exception(self):
         state = _base_state(
-            user_data={"primer_nombre": "Carlos", "account_status": "active", "orders": []}
+            user_data={
+                "primer_nombre": "Carlos",
+                "account_status": "active",
+                "orders": [],
+            }
         )
         mock_chain = MagicMock()
         mock_chain.ainvoke = AsyncMock(side_effect=RuntimeError("OpenAI down"))
 
-        with patch("source.domain.handle_general.get_general_chain", return_value=mock_chain):
+        with patch(
+            "source.domain.handle_general.get_general_chain", return_value=mock_chain
+        ):
             result = await handle_general(state)
 
         assert "generation" in result
@@ -162,13 +195,16 @@ class TestHandleGeneral:
         state = _base_state(user_data=None)
         mock_chain = _mock_chain("Lo siento, no encontré tu información.")
 
-        with patch("source.domain.handle_general.get_general_chain", return_value=mock_chain):
+        with patch(
+            "source.domain.handle_general.get_general_chain", return_value=mock_chain
+        ):
             result = await handle_general(state)
 
         assert "generation" in result
 
 
 # ── filter_user_data ──────────────────────────────────────────────────────────
+
 
 class TestFilterUserData:
     def _full_user(self):
