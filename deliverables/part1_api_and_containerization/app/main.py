@@ -11,8 +11,9 @@ from app.config import settings
 from app.exception_handlers import general_error_handler, validation_error_handler
 from app.middleware.correlation import CorrelationIdMiddleware
 from app.middleware.logging import RequestLoggingMiddleware
-from app.routers import chat, health
+from app.routers import chat, feedback, health
 from app.store.conversation_history import ConversationHistoryStore
+from app.store.feedback_store import FeedbackStore
 
 logger = logging.getLogger(__name__)
 
@@ -28,15 +29,24 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # reads OPENAI_API_KEY at instantiation time.
     from langgraph.checkpoint.memory import MemorySaver  # noqa: PLC0415
 
+    from deliverables.part2_ab_testing.agent_versions.version_b import (  # noqa: PLC0415
+        workflow_b,
+    )
     from source.application.graph import workflow  # noqa: PLC0415
 
-    checkpointer = MemorySaver()
-    app.state.graph = workflow.compile(checkpointer=checkpointer)
+    # Each variant gets its own checkpointer so conversation state is isolated.
+    app.state.graph_a = workflow.compile(checkpointer=MemorySaver())
+    app.state.graph_b = workflow_b.compile(checkpointer=MemorySaver())
+    # Keep `graph` as an alias for graph_a so the /health endpoint can check it
+    # without knowing about the A/B split.
+    app.state.graph = app.state.graph_a
+
     app.state.history_store = ConversationHistoryStore(
         max_messages=settings.max_conversation_history
     )
+    app.state.feedback_store = FeedbackStore()
 
-    logger.info("LangGraph compiled. API ready.")
+    logger.info("LangGraph compiled (graph_a + graph_b). API ready.")
     yield
 
     logger.info("API shutting down.")
@@ -66,6 +76,7 @@ def create_app() -> FastAPI:
 
     app.include_router(health.router)
     app.include_router(chat.router)
+    app.include_router(feedback.router)
 
     return app
 

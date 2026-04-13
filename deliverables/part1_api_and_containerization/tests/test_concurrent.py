@@ -26,6 +26,7 @@ def concurrent_app():
     """Fresh FastAPI app with a mocked graph for each test."""
     from app.main import create_app
     from app.store.conversation_history import ConversationHistoryStore
+    from app.store.feedback_store import FeedbackStore
 
     app = create_app()
     mock_graph = MagicMock()
@@ -36,7 +37,10 @@ def concurrent_app():
         }
     )
     app.state.graph = mock_graph
+    app.state.graph_a = mock_graph
+    app.state.graph_b = mock_graph
     app.state.history_store = ConversationHistoryStore()
+    app.state.feedback_store = FeedbackStore()
     return app
 
 

@@ -31,15 +31,21 @@ def app_with_mock_graph(mock_graph_result):
     """FastAPI app with the LangGraph instance replaced by an AsyncMock."""
     from app.main import create_app
     from app.store.conversation_history import ConversationHistoryStore
+    from app.store.feedback_store import FeedbackStore
 
     test_app = create_app()
 
     mock_graph = MagicMock()
     mock_graph.ainvoke = AsyncMock(return_value=mock_graph_result)
 
-    # Bypass lifespan — inject state directly
-    test_app.state.graph = mock_graph
+    # Bypass lifespan — inject state directly.
+    # Both graph_a and graph_b point to the same mock so A/B routing works
+    # in tests without real OpenAI calls.
+    test_app.state.graph = mock_graph  # kept for /health backward-compat
+    test_app.state.graph_a = mock_graph
+    test_app.state.graph_b = mock_graph
     test_app.state.history_store = ConversationHistoryStore()
+    test_app.state.feedback_store = FeedbackStore()
 
     return test_app
 

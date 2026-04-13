@@ -11,6 +11,11 @@ from app.schemas import (
     ErrorResponse,
     MessageEntry,
 )
+from deliverables.part2_ab_testing.ab_router import (
+    assign_variant,
+    get_graph_for_variant,
+    log_assignment,
+)
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 logger = logging.getLogger(__name__)
@@ -28,8 +33,12 @@ logger = logging.getLogger(__name__)
 )
 async def post_chat(request: Request, body: ChatRequest) -> ChatResponse:
     correlation_id: str = request.state.correlation_id
-    graph = request.app.state.graph
     history_store = request.app.state.history_store
+
+    # Deterministic A/B assignment — same user_id always maps to the same variant.
+    variant = assign_variant(body.user_id)
+    graph = get_graph_for_variant(variant, request.app.state)
+    log_assignment(body.user_id, variant, correlation_id, logger)
 
     chat_history = history_store.get(body.conversation_id)
 
@@ -93,11 +102,14 @@ async def post_chat(request: Request, body: ChatRequest) -> ChatResponse:
         user_message=body.message,
         assistant_message=generation,
     )
+    # Persist metadata so the feedback endpoint can resolve variant for this conversation.
+    history_store.set_metadata(body.conversation_id, body.user_id, variant)
 
     logger.info(
-        "Chat OK | user=%s | conversation=%s | flow=%s | correlation_id=%s",
+        "Chat OK | user=%s | conversation=%s | variant=%s | flow=%s | correlation_id=%s",
         body.user_id,
         body.conversation_id,
+        variant,
         result.get("flow"),
         correlation_id,
     )
@@ -108,6 +120,7 @@ async def post_chat(request: Request, body: ChatRequest) -> ChatResponse:
         response=generation,
         correlation_id=correlation_id,
         flow=result.get("flow", []),
+        ab_variant=variant,
     )
 
 

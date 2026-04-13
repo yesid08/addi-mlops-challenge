@@ -1,17 +1,48 @@
 # Part 2 — A/B Testing
 
-Place your deliverables for Part 2 here.
-
-## Expected Files
-
-- Agent version files (Version A / Version B)
-- Feature toggle / traffic split implementation
-- `measurement_plan.md` — Your experiment design document
-
 ## Files
-
-_List and describe the files you created:_
 
 | File | Description |
 |------|-------------|
-| | |
+| `ab_config.py` | `ABSettings` (Pydantic BaseSettings) reads `AB_TREATMENT_TRAFFIC_PCT` and `AB_EXPERIMENT_SALT` from environment; no redeploy needed to change split |
+| `ab_router.py` | `assign_variant(user_id)` — deterministic SHA-256 bucketing; `get_graph_for_variant()` — selects compiled graph; `log_assignment()` — structured log per request |
+| `agent_versions/version_a.py` | Thin re-export of the control chain and graph from `source/` |
+| `agent_versions/version_b.py` | Treatment: Spanish system prompt, `temperature=0.3`, bullet-formatted KB, `handle_general_b` domain function, `workflow_b` graph |
+| `measurement_plan.md` | Experiment hypothesis, metrics, sample-size analysis, guardrails |
+| `tests/test_ab_router.py` | Determinism, distribution, boundary, salt-isolation tests |
+| `tests/test_version_b.py` | Unit tests for `handle_general_b`, `get_treatment_chain`, and the KB formatter |
+
+## How the split works
+
+Every `POST /chat` request:
+1. Calls `assign_variant(user_id)` → SHA-256 hash of `"<salt>:<user_id>"` → bucket mod 100 → "A" or "B"
+2. Selects `app.state.graph_a` or `app.state.graph_b` (compiled at startup)
+3. Logs `ab_variant=A|B user_id=... correlation_id=...`
+4. Returns `ab_variant` in the response body
+
+## User feedback (adoption signal)
+
+```
+POST /chat/conversations/{conversation_id}/feedback
+Body: {"rating": "good" | "bad"}
+
+GET /ab/feedback/summary
+→ per-variant good/bad counts, good-rate, live two-proportion z-test
+```
+
+## Configuration
+
+| Environment variable | Default | Effect |
+|---------------------|---------|--------|
+| `AB_TREATMENT_TRAFFIC_PCT` | `50` | % of users routed to Version B (0 = kill switch) |
+| `AB_EXPERIMENT_SALT` | `emporyum-ab-v1` | Change to reassign all users to new buckets |
+
+## Running tests
+
+```bash
+# Part 2 unit tests (no OpenAI calls)
+OPENAI_API_KEY=sk-fake poetry run pytest deliverables/part2_ab_testing/tests/ -v
+
+# All tests including Part 1 (feedback endpoints)
+OPENAI_API_KEY=sk-fake poetry run pytest deliverables/ -v
+```

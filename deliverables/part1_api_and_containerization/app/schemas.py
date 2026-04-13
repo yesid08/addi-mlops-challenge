@@ -1,4 +1,5 @@
 import re
+from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -35,6 +36,7 @@ class ChatResponse(BaseModel):
     response: str
     correlation_id: str
     flow: list[str] = []
+    ab_variant: str = "A"
 
 
 class ErrorResponse(BaseModel):
@@ -59,3 +61,39 @@ class ConversationHistoryResponse(BaseModel):
     conversation_id: str
     messages: list[MessageEntry]
     turn_count: int
+
+
+# ---------------------------------------------------------------------------
+# Feedback schemas
+# ---------------------------------------------------------------------------
+
+
+class FeedbackRequest(BaseModel):
+    rating: Literal["good", "bad"] = Field(..., examples=["good"])
+
+
+class FeedbackResponse(BaseModel):
+    conversation_id: str
+    rating: str
+    ab_variant: str
+    timestamp: str
+
+
+class VariantStats(BaseModel):
+    good: int
+    bad: int
+    total: int
+    good_rate: float | None
+
+
+class StatisticalTest(BaseModel):
+    z_statistic: float
+    p_value: float
+    significant: bool
+    note: str
+
+
+class FeedbackSummaryResponse(BaseModel):
+    A: VariantStats
+    B: VariantStats
+    statistical_test: StatisticalTest | None = None

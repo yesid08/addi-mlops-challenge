@@ -9,12 +9,17 @@ class ConversationHistoryStore:
     Each entry is a list of {"role": "user"|"assistant", "content": "..."} dicts,
     matching the format expected by the LangGraph GraphState `messages` field.
 
+    Also stores lightweight metadata per conversation (user_id, ab_variant) so
+    that the feedback endpoint can attribute ratings to the correct A/B variant
+    without requiring callers to re-send that information.
+
     Note: state is lost on process restart. For multi-process deployments,
     replace with a Redis or database-backed implementation.
     """
 
     def __init__(self, max_messages: int = 50) -> None:
         self._store: dict[str, list[dict[str, Any]]] = defaultdict(list)
+        self._metadata: dict[str, dict[str, str]] = {}
         self._lock = threading.Lock()
         self._max = max_messages
 
@@ -46,3 +51,20 @@ class ConversationHistoryStore:
         """Return all known conversation IDs."""
         with self._lock:
             return list(self._store.keys())
+
+    def set_metadata(self, conversation_id: str, user_id: str, ab_variant: str) -> None:
+        """Store the user_id and A/B variant for a conversation.
+
+        Called by the chat router after a successful response so that the
+        feedback endpoint can resolve conversation_id → variant.
+        """
+        with self._lock:
+            self._metadata[conversation_id] = {
+                "user_id": user_id,
+                "ab_variant": ab_variant,
+            }
+
+    def get_metadata(self, conversation_id: str) -> dict[str, str] | None:
+        """Return stored metadata for a conversation, or None if unknown."""
+        with self._lock:
+            return self._metadata.get(conversation_id)
