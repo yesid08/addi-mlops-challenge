@@ -67,12 +67,28 @@ curl http://localhost:8000/health
 
 ## Running Tests
 
-Tests use a mocked graph — no real OpenAI key needed.
+Tests use a mocked LLM — no real OpenAI key needed.
 
 ```bash
-# From the project root
+# From the project root — run the full suite
 OPENAI_API_KEY=sk-fake poetry run pytest deliverables/part1_api_and_containerization/tests/ -v
+
+# Run a specific layer
+OPENAI_API_KEY=sk-fake poetry run pytest deliverables/part1_api_and_containerization/tests/test_domain.py -v
+OPENAI_API_KEY=sk-fake poetry run pytest deliverables/part1_api_and_containerization/tests/test_integration.py -v
+OPENAI_API_KEY=sk-fake poetry run pytest deliverables/part1_api_and_containerization/tests/test_concurrent.py -v
 ```
+
+### Testing strategy
+
+| File | Layer | What it verifies |
+|------|-------|-----------------|
+| `test_schemas.py` | Unit | Pydantic request/response validation (user_id whitelist, message length, conversation_id format) |
+| `test_domain.py` | Unit | `fetch_user_data` node, `handle_general` node (chain mocked), `filter_user_data` util — no LLM, no HTTP |
+| `test_integration.py` | Integration | Full compiled LangGraph workflow (`fetch_user_data → handle_general → END`) with chain mocked; verifies node order, state population, and error fallback |
+| `test_health.py` | API | `GET /health` schema and status logic |
+| `test_chat.py` | API | `POST /chat` happy path, error codes (422/504/502), conversation history endpoints |
+| `test_concurrent.py` | Concurrency | `asyncio.gather` fires four simultaneous requests for `user_001`–`user_004`; checks routing correctness, unique correlation IDs, and per-conversation history isolation |
 
 ## Request / Response Schema
 
@@ -128,9 +144,12 @@ deliverables/part1_api_and_containerization/
 │       └── conversation_history.py  # In-memory history store
 ├── tests/
 │   ├── conftest.py
-│   ├── test_schemas.py
-│   ├── test_health.py
-│   └── test_chat.py
+│   ├── test_schemas.py       # Unit — Pydantic validation
+│   ├── test_domain.py        # Unit — domain nodes + data_filter
+│   ├── test_integration.py   # Integration — full compiled graph
+│   ├── test_health.py        # API — /health endpoint
+│   ├── test_chat.py          # API — /chat + history endpoints
+│   └── test_concurrent.py    # Concurrency — asyncio.gather, 4 users
 ├── Dockerfile
 ├── docker-compose.yml
 └── README.md

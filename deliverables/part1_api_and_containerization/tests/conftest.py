@@ -1,5 +1,6 @@
-import asyncio
 import os
+import sys
+from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -9,6 +10,12 @@ from httpx import ASGITransport, AsyncClient
 # Provide a fake key before any module-level import of config.py triggers
 # Pydantic's BaseSettings validation.
 os.environ.setdefault("OPENAI_API_KEY", "sk-test-fake-key-for-tests")
+
+# Make the project root importable so `source.*` packages resolve correctly
+# when tests run from the deliverables sub-directory.
+_PROJECT_ROOT = str(Path(__file__).parents[3])
+if _PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT)
 
 
 @pytest.fixture(scope="session")
