@@ -11,11 +11,15 @@ langgraph = "^0.6.4"
 langchain-openai = "^0.3.0"
 langchain-core = "^0.3.0"
 pydantic = "^2.0"
+pydantic-settings = "^2.0"
 python-dotenv = "^1.0.0"
+fastapi = "^0.115.0"
+uvicorn = {extras = ["standard"], version = "^0.32.0"}
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.5"
 pytest-asyncio = "^0.25.3"
+httpx = "^0.28.1"
 
 [build-system]
 requires = ["poetry-core"]
