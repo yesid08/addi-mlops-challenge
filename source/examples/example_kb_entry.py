@@ -14,16 +14,12 @@ EXAMPLE_KB_STRUCTURE = {
     "TOPIC_NAME": {
         # Which graph node should handle questions about this topic.
         "responsible_agent": "handle_<agent_name>",
-
         # Brief description of when this topic applies.
         "contexto": "Description of the user's intent or situation.",
-
         # Example user questions that would trigger this topic.
         "pregunta": "Example question 1 / Example question 2",
-
         # Comma-separated keywords useful for classification.
         "keywords": "keyword1, keyword2, keyword3",
-
         # Detailed instructions for how the agent should respond.
         # This is where you encode business rules, edge cases, and behavior guidelines.
         "instrucciones": (
@@ -31,7 +27,6 @@ EXAMPLE_KB_STRUCTURE = {
             "Include specific business rules from the stakeholder interviews. "
             "Cover edge cases and what to do when information is missing."
         ),
-
         # List of conditional scenarios. The agent should pick the one that matches
         # the user's current situation based on their data.
         "escenarios": [
@@ -45,7 +40,6 @@ EXAMPLE_KB_STRUCTURE = {
             },
             # Add more scenarios for different conditions...
         ],
-
         # List of user_data field names needed for this topic.
         # Used with data_filter.py to pass only relevant data to the agent.
         "variables": ["field_name_1", "field_name_2"],

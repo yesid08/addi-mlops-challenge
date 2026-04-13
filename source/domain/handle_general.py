@@ -6,13 +6,12 @@ into a single prompt. There is no topic routing or specialized handling —
 every question gets the same treatment regardless of the topic.
 """
 
-from typing import Any, Dict
+from typing import Any
 
-from source.application.state import GraphState
-from source.adapters.utils.knowledge_base import SCENARIO_KNOWLEDGE_BASE
-from source.adapters.utils.data_filter import filter_user_data
 from source.adapters.chains.general_chain import get_general_chain
-
+from source.adapters.utils.data_filter import filter_user_data
+from source.adapters.utils.knowledge_base import SCENARIO_KNOWLEDGE_BASE
+from source.application.state import GraphState
 
 # Fields the generic agent uses — a specialized agent would use fewer, topic-relevant fields.
 GENERAL_RELEVANT_FIELDS = [
@@ -23,7 +22,7 @@ GENERAL_RELEVANT_FIELDS = [
 ]
 
 
-async def handle_general(state: GraphState) -> Dict[str, Any]:
+async def handle_general(state: GraphState) -> dict[str, Any]:
     """Handle any question by passing the entire KB and filtered user data to the LLM."""
     state["flow"].append("handle_general")
 
@@ -32,12 +31,14 @@ async def handle_general(state: GraphState) -> Dict[str, Any]:
 
     try:
         chain = get_general_chain()
-        result = await chain.ainvoke({
-            "knowledge_base": knowledge_base,
-            "user_data": str(filtered_data),
-            "messages": state.get("messages", []),
-            "question": state["question"],
-        })
+        result = await chain.ainvoke(
+            {
+                "knowledge_base": knowledge_base,
+                "user_data": str(filtered_data),
+                "messages": state.get("messages", []),
+                "question": state["question"],
+            }
+        )
 
         return {"generation": result.respuesta_final}
 

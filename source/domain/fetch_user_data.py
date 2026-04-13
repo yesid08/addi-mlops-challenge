@@ -1,12 +1,12 @@
 """First node: fetches user data from mock data store."""
 
-from typing import Any, Dict
+from typing import Any
 
-from source.application.state import GraphState
 from source.adapters.utils.mock_data import MOCK_USERS
+from source.application.state import GraphState
 
 
-async def fetch_user_data(state: GraphState) -> Dict[str, Any]:
+async def fetch_user_data(state: GraphState) -> dict[str, Any]:
     """Fetch user data from mock data store."""
     state["flow"].append("fetch_user_data")
 

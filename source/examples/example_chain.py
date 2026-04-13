@@ -10,13 +10,15 @@ Pattern:
 3. Build the chain: prompt | ChatOpenAI().with_structured_output(Model)
 4. Invoke with: result = await chain.ainvoke({...})
 """
+
 import os
-from pydantic import BaseModel, Field
+
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI
-
+from pydantic import BaseModel, Field
 
 # --- Step 1: Define Pydantic model for structured output ---
+
 
 class AgentResponse(BaseModel):
     """Structured output for an agent. Define fields relevant to your use case."""
@@ -47,14 +49,17 @@ SYSTEM_PROMPT = """You are a helpful assistant.
 - Keep responses concise (2-3 sentences max).
 """
 
-agent_prompt = ChatPromptTemplate.from_messages([
-    ("system", SYSTEM_PROMPT),
-    MessagesPlaceholder(variable_name="messages"),
-    ("human", "{question}"),
-])
+agent_prompt = ChatPromptTemplate.from_messages(
+    [
+        ("system", SYSTEM_PROMPT),
+        MessagesPlaceholder(variable_name="messages"),
+        ("human", "{question}"),
+    ]
+)
 
 
 # --- Step 3: Build the chain ---
+
 
 def get_example_chain():
     """

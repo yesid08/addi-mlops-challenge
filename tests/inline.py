@@ -18,6 +18,7 @@ Change the USER_ID below to test with different user profiles:
     user_007: Diego (Bucaramanga) - Loyal customer, all paid
     user_008: Laura (Pereira) - Unverified email, pending order
 """
+
 import asyncio
 import os
 import sys
@@ -28,16 +29,17 @@ project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, project_root)
 
 from dotenv import load_dotenv
+
 load_dotenv(os.path.join(project_root, ".env"))
 
 from langgraph.checkpoint.memory import MemorySaver
-from source.application.graph import workflow
 
+from source.application.graph import workflow
 
 # ============================================================
 # CONFIGURATION - Change these to test different scenarios
 # ============================================================
-USER_ID = "user_001"          # Change to test different user profiles
+USER_ID = "user_001"  # Change to test different user profiles
 CONVERSATION_ID = "test-002"  # Change to start a fresh conversation
 # ============================================================
 
@@ -49,11 +51,11 @@ async def run_chat():
     config = {"configurable": {"thread_id": CONVERSATION_ID}}
     chat_history = []
 
-    print(f"\n{'='*60}")
-    print(f"  Emporyum Tech Assistant - Interactive Testing")
+    print(f"\n{'=' * 60}")
+    print("  Emporyum Tech Assistant - Interactive Testing")
     print(f"  User: {USER_ID} | Conversation: {CONVERSATION_ID}")
-    print(f"  Type 'exit' to quit, 'reset' to clear history")
-    print(f"{'='*60}\n")
+    print("  Type 'exit' to quit, 'reset' to clear history")
+    print(f"{'=' * 60}\n")
 
     while True:
         try:

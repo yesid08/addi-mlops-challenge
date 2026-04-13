@@ -1,4 +1,4 @@
-from typing import TypedDict, List, Optional, Dict, Any
+from typing import Any, TypedDict
 
 
 class GraphState(TypedDict):
@@ -15,27 +15,27 @@ class GraphState(TypedDict):
 
     # --- Input ---
     question: str
-    messages: List[Dict[str, Any]]
+    messages: list[dict[str, Any]]
 
     # --- Output ---
     generation: str
 
     # --- Flow tracking ---
-    flow: List[str]
+    flow: list[str]
 
     # --- User data (fetched from mock data) ---
-    user_data: Optional[Dict[str, Any]]
-    user_data_summary: Optional[Dict[str, Any]]
+    user_data: dict[str, Any] | None
+    user_data_summary: dict[str, Any] | None
 
     # --- Router output ---
-    selected_topic: Optional[str]
-    selected_agent: Optional[str]
-    router_reasoning: Optional[str]
+    selected_topic: str | None
+    selected_agent: str | None
+    router_reasoning: str | None
 
     # --- Multi-step process tracking ---
-    current_step: Optional[str]
+    current_step: str | None
     is_return_in_progress: bool
 
     # --- Conversation context ---
-    last_topic_selected: Optional[str]
-    set_previous_selected_topics: List[str]
+    last_topic_selected: str | None
+    set_previous_selected_topics: list[str]
