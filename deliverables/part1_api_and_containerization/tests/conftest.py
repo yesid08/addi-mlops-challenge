@@ -30,6 +30,7 @@ def mock_graph_result():
 def app_with_mock_graph(mock_graph_result):
     """FastAPI app with the LangGraph instance replaced by an AsyncMock."""
     from app.main import create_app
+    from app.store.ab_config_store import ABConfigStore
     from app.store.conversation_history import ConversationHistoryStore
     from app.store.feedback_store import FeedbackStore
 
@@ -46,6 +47,7 @@ def app_with_mock_graph(mock_graph_result):
     test_app.state.graph_b = mock_graph
     test_app.state.history_store = ConversationHistoryStore()
     test_app.state.feedback_store = FeedbackStore()
+    test_app.state.ab_config_store = ABConfigStore()
 
     return test_app
 

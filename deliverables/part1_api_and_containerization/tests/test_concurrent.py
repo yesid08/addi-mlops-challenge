@@ -25,6 +25,7 @@ os.environ.setdefault("OPENAI_API_KEY", "sk-test-fake-key-for-tests")
 def concurrent_app():
     """Fresh FastAPI app with a mocked graph for each test."""
     from app.main import create_app
+    from app.store.ab_config_store import ABConfigStore
     from app.store.conversation_history import ConversationHistoryStore
     from app.store.feedback_store import FeedbackStore
 
@@ -41,6 +42,7 @@ def concurrent_app():
     app.state.graph_b = mock_graph
     app.state.history_store = ConversationHistoryStore()
     app.state.feedback_store = FeedbackStore()
+    app.state.ab_config_store = ABConfigStore()
     return app
 
 

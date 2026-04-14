@@ -97,3 +97,19 @@ class FeedbackSummaryResponse(BaseModel):
     A: VariantStats
     B: VariantStats
     statistical_test: StatisticalTest | None = None
+
+
+# ---------------------------------------------------------------------------
+# A/B config schemas
+# ---------------------------------------------------------------------------
+
+
+class ABConfigRequest(BaseModel):
+    traffic_pct: int = Field(..., ge=0, le=100, examples=[30])
+    salt: str | None = Field(None, examples=["emporyum-ab-v2"])
+
+
+class ABConfigResponse(BaseModel):
+    traffic_pct: int
+    salt: str
+    source: Literal["override", "env_var"]

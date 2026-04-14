@@ -36,7 +36,9 @@ async def post_chat(request: Request, body: ChatRequest) -> ChatResponse:
     history_store = request.app.state.history_store
 
     # Deterministic A/B assignment — same user_id always maps to the same variant.
-    variant = assign_variant(body.user_id)
+    # Runtime overrides from ab_config_store take precedence over env-var defaults.
+    ab_store = request.app.state.ab_config_store
+    variant = assign_variant(body.user_id, pct=ab_store.get_pct(), salt=ab_store.get_salt())
     graph = get_graph_for_variant(variant, request.app.state)
     log_assignment(body.user_id, variant, correlation_id, logger)
 

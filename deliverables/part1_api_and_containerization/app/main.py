@@ -11,7 +11,8 @@ from app.config import settings
 from app.exception_handlers import general_error_handler, validation_error_handler
 from app.middleware.correlation import CorrelationIdMiddleware
 from app.middleware.logging import RequestLoggingMiddleware
-from app.routers import chat, feedback, health
+from app.routers import ab_config, chat, feedback, health
+from app.store.ab_config_store import ABConfigStore
 from app.store.conversation_history import ConversationHistoryStore
 from app.store.feedback_store import FeedbackStore
 
@@ -45,6 +46,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         max_messages=settings.max_conversation_history
     )
     app.state.feedback_store = FeedbackStore()
+    app.state.ab_config_store = ABConfigStore()
 
     logger.info("LangGraph compiled (graph_a + graph_b). API ready.")
     yield
@@ -77,6 +79,7 @@ def create_app() -> FastAPI:
     app.include_router(health.router)
     app.include_router(chat.router)
     app.include_router(feedback.router)
+    app.include_router(ab_config.router)
 
     return app
 
