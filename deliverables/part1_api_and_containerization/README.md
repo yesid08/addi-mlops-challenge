@@ -18,13 +18,14 @@ Interactive docs available at `http://localhost:8000/docs` once the server is ru
 - **Server-side conversation history**: The server maintains message history per `conversation_id` in memory. Callers only send the latest message — no need to re-send the full history each turn. History resets on process restart (production should use Redis or a database).
 - **Correlation IDs**: `user_id` and `conversation_id` are business identifiers. `correlation_id` is an infrastructure identifier — it is scoped to a single HTTP request, not a conversation. One conversation produces many correlation IDs (one per turn). It is used to link every log line (FastAPI → LangGraph → OpenAI) for a single request across all systems. Pass `X-Correlation-ID` in the request to propagate your own trace ID from an upstream gateway; one is generated automatically if absent.
 - **Timeouts**: LLM calls are wrapped with `asyncio.wait_for` (default 30s). Returns `504` on timeout.
+- **LLM provider fallback**: Every chain is built with a `RunnableWithFallbacks` — OpenAI (`gpt-4o-mini`) is the primary; Google Gemini 2.0 Flash is the automatic fallback. If OpenAI raises any exception (outage, rate limit, auth failure), LangChain retries the same prompt against Gemini transparently before the request fails. Both `OPENAI_API_KEY` and `GOOGLE_API_KEY` are required. The fallback logic lives in `source/adapters/chains/llm_factory.py` (`build_chain_with_fallback`).
 - **Validation**: `user_id` is validated against the known set (`user_001`–`user_008`) before any LLM call.
 
 ## Prerequisites
 
 - Python 3.10+
 - [Poetry](https://python-poetry.org/)
-- `OPENAI_API_KEY` in `.env` at the project root
+- `OPENAI_API_KEY` and `GOOGLE_API_KEY` in `.env` at the project root
 
 ## Running Locally
 
@@ -36,7 +37,7 @@ poetry install
 
 # Copy and populate environment variables (only needed once)
 cp .env.example .env
-# Edit .env and set OPENAI_API_KEY=sk-...
+# Edit .env and set OPENAI_API_KEY=sk-... and GOOGLE_API_KEY=...
 
 # Start the dev server (auto-reloads on file changes)
 cd deliverables/part1_api_and_containerization && \
@@ -81,7 +82,7 @@ No manual `cd` or environment variable export is needed when using the VS Code d
 # From the project root — build the image and start the container
 docker-compose -f deliverables/part1_api_and_containerization/docker-compose.yml up --build
 
-# OPENAI_API_KEY is read automatically from .env at the project root
+# OPENAI_API_KEY and GOOGLE_API_KEY are read automatically from .env at the project root
 # Verify the container is healthy
 curl http://localhost:8000/health
 ```
@@ -102,7 +103,7 @@ docker run --rm -p 8000:8000 --env-file .env emporyum-api:latest
 
 ## Running Tests
 
-Tests use a mocked LLM — no real OpenAI key needed.
+Tests use a mocked LLM — no real API keys needed. Both `OPENAI_API_KEY` and `GOOGLE_API_KEY` are set to fake values automatically by `conftest.py`.
 
 ```bash
 # From the project root — run the full suite
@@ -119,7 +120,7 @@ OPENAI_API_KEY=sk-fake poetry run pytest deliverables/part1_api_and_containeriza
 | File | Layer | What it verifies |
 |------|-------|-----------------|
 | `test_schemas.py` | Unit | Pydantic request/response validation (user_id whitelist, message length, conversation_id format) |
-| `test_domain.py` | Unit | `fetch_user_data` node, `handle_general` node (chain mocked), `filter_user_data` util — no LLM, no HTTP |
+| `test_domain.py` | Unit | `fetch_user_data` node, `handle_general` node (chain mocked), `filter_user_data` util, `build_chain_with_fallback` factory — no LLM, no HTTP |
 | `test_integration.py` | Integration | Full compiled LangGraph workflow (`fetch_user_data → handle_general → END`) with chain mocked; verifies node order, state population, and error fallback |
 | `test_health.py` | API | `GET /health` schema and status logic |
 | `test_chat.py` | API | `POST /chat` happy path, error codes (422/504/502), conversation history endpoints |
@@ -155,7 +156,7 @@ Response:
 |--------|-------|
 | `422` | Invalid `user_id`, empty message, or missing required fields |
 | `504` | LLM did not respond within 30 seconds |
-| `502` | Upstream LLM/OpenAI error |
+| `502` | Both LLM providers (OpenAI + Gemini fallback) failed |
 | `500` | Unexpected internal error |
 
 All error responses include a `correlation_id` for tracing.
@@ -189,5 +190,7 @@ deliverables/part1_api_and_containerization/
 ├── docker-compose.yml
 └── README.md
 ```
+
+The LLM factory (`source/adapters/chains/llm_factory.py`) and the two chain modules (`general_chain.py`, `version_b.py`) live outside this directory under the shared `source/` package.
 
 CI/CD pipeline is at `.github/workflows/ci.yml` (project root).
