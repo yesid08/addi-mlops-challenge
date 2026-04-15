@@ -27,10 +27,18 @@ def _build_response(request: Request) -> ABConfigResponse:
     override_pct = store.get_pct()
     override_salt = store.get_salt()
 
-    effective_pct = override_pct if override_pct is not None else ab_settings.ab_treatment_traffic_pct
-    effective_salt = override_salt if override_salt is not None else ab_settings.ab_experiment_salt
+    effective_pct = (
+        override_pct
+        if override_pct is not None
+        else ab_settings.ab_treatment_traffic_pct
+    )
+    effective_salt = (
+        override_salt if override_salt is not None else ab_settings.ab_experiment_salt
+    )
     source: Literal["override", "env_var"] = (
-        "override" if (override_pct is not None or override_salt is not None) else "env_var"
+        "override"
+        if (override_pct is not None or override_salt is not None)
+        else "env_var"
     )
 
     return ABConfigResponse(

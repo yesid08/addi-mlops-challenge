@@ -3,6 +3,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     openai_api_key: str
+    google_api_key: str
     chat_timeout_seconds: float = 30.0
     max_conversation_history: int = 50
     cors_origins: list[str] = ["*"]

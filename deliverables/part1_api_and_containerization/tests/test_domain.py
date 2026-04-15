@@ -11,6 +11,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 os.environ.setdefault("OPENAI_API_KEY", "sk-test-fake-key-for-tests")
+os.environ.setdefault("GOOGLE_API_KEY", "fake-google-key-for-tests")
 
 from source.adapters.utils.data_filter import filter_user_data
 from source.domain.fetch_user_data import fetch_user_data
@@ -260,3 +261,50 @@ class TestFilterUserData:
         user = {"primer_nombre": "Ana", "account_status": "active", "orders": []}
         result = filter_user_data(user, [""])
         assert "" not in result
+
+
+# ── build_chain_with_fallback ─────────────────────────────────────────────────
+
+
+class TestBuildChainWithFallback:
+    """Test the chain-level factory that wires OpenAI primary + Gemini fallback."""
+
+    def _make_prompt(self):
+        from langchain_core.prompts import ChatPromptTemplate
+
+        return ChatPromptTemplate.from_messages([("human", "{question}")])
+
+    def _make_schema(self):
+        from pydantic import BaseModel, Field
+
+        class _Schema(BaseModel):
+            respuesta_final: str = Field(..., description="Response")
+
+        return _Schema
+
+    def test_always_returns_runnable_with_fallbacks(self):
+        """Factory always returns a RunnableWithFallbacks — Gemini fallback is always armed."""
+        from langchain_core.runnables.fallbacks import RunnableWithFallbacks
+
+        from source.adapters.chains.llm_factory import build_chain_with_fallback
+
+        result = build_chain_with_fallback(
+            self._make_prompt(), self._make_schema(), temperature=0
+        )
+        assert isinstance(result, RunnableWithFallbacks)
+
+    def test_primary_llm_uses_correct_temperature(self):
+        """ChatOpenAI is instantiated with the temperature passed to the factory."""
+        with patch("source.adapters.chains.llm_factory.ChatOpenAI") as mock_cls:
+            mock_instance = MagicMock()
+            mock_cls.return_value = mock_instance
+            mock_instance.with_structured_output.return_value = MagicMock()
+
+            from source.adapters.chains.llm_factory import build_chain_with_fallback
+
+            build_chain_with_fallback(
+                self._make_prompt(), self._make_schema(), temperature=0.7
+            )
+
+        _, kwargs = mock_cls.call_args
+        assert kwargs.get("temperature") == 0.7

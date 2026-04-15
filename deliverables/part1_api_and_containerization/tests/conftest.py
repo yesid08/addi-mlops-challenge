@@ -7,9 +7,10 @@ import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
-# Provide a fake key before any module-level import of config.py triggers
+# Provide fake keys before any module-level import of config.py triggers
 # Pydantic's BaseSettings validation.
 os.environ.setdefault("OPENAI_API_KEY", "sk-test-fake-key-for-tests")
+os.environ.setdefault("GOOGLE_API_KEY", "fake-google-key-for-tests")
 
 # Make the project root importable so `source.*` packages resolve correctly
 # when tests run from the deliverables sub-directory.

@@ -15,15 +15,14 @@ Everything else (model, output schema shape, data filter, graph topology) is
 identical to Version A so that only these three variables are being tested.
 """
 
-import os
 from typing import Any
 
 from dotenv import load_dotenv
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_openai import ChatOpenAI
 from langgraph.graph import END, StateGraph
 from pydantic import BaseModel, Field
 
+from source.adapters.chains.llm_factory import build_chain_with_fallback
 from source.adapters.utils.data_filter import filter_user_data
 from source.adapters.utils.knowledge_base import SCENARIO_KNOWLEDGE_BASE
 from source.application.state import GraphState
@@ -82,12 +81,9 @@ class TreatmentResponse(BaseModel):
 
 def get_treatment_chain() -> Any:
     """Build and return the treatment agent chain with structured output."""
-    llm = ChatOpenAI(
-        model="gpt-4o-mini",
-        temperature=0.3,  # treatment differentiator #2
-        api_key=os.getenv("OPENAI_API_KEY"),  # type: ignore[arg-type]
-    )
-    return treatment_prompt | llm.with_structured_output(TreatmentResponse)
+    return build_chain_with_fallback(
+        treatment_prompt, TreatmentResponse, temperature=0.3
+    )  # treatment differentiator #2
 
 
 # ---------------------------------------------------------------------------

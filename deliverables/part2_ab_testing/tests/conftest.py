@@ -2,8 +2,9 @@ import os
 import sys
 from pathlib import Path
 
-# Provide a fake key before any module-level import that triggers BaseSettings validation.
+# Provide fake keys before any module-level import that triggers BaseSettings validation.
 os.environ.setdefault("OPENAI_API_KEY", "sk-test-fake-key-for-tests")
+os.environ.setdefault("GOOGLE_API_KEY", "fake-google-key-for-tests")
 
 # Make the project root importable so `source.*` and `deliverables.*` resolve correctly.
 _PROJECT_ROOT = str(Path(__file__).parents[3])

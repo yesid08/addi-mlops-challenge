@@ -138,9 +138,7 @@ class TestHandleGeneralB:
         assert "Disculpa" in result["generation"]
 
     def test_treatment_chain_uses_temperature_03(self) -> None:
-        with patch(
-            "deliverables.part2_ab_testing.agent_versions.version_b.ChatOpenAI"
-        ) as mock_llm_cls:
+        with patch("source.adapters.chains.llm_factory.ChatOpenAI") as mock_llm_cls:
             mock_instance = MagicMock()
             mock_llm_cls.return_value = mock_instance
             mock_instance.with_structured_output.return_value = MagicMock()
