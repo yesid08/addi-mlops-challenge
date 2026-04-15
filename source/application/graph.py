@@ -7,7 +7,7 @@ This module exports `workflow` as a StateGraph instance (NOT compiled).
 The inline.py entry point compiles it with a checkpointer.
 """
 
-from langgraph.graph import StateGraph, END
+from langgraph.graph import END, StateGraph
 
 from source.application.state import GraphState
 from source.domain.fetch_user_data import fetch_user_data

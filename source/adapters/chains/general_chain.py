@@ -1,15 +1,19 @@
-import os
 from dotenv import load_dotenv
-from pydantic import BaseModel, Field
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_openai import ChatOpenAI
+from pydantic import BaseModel, Field
+
+from source.adapters.chains.llm_factory import build_chain_with_fallback
 
 load_dotenv()
 
 
 class GeneralResponse(BaseModel):
-    reasoning: str = Field(..., description="Brief reasoning for the response. Max 20 words.")
-    respuesta_final: str = Field(..., description="Response to the user in Colombian Spanish.")
+    reasoning: str = Field(
+        ..., description="Brief reasoning for the response. Max 20 words."
+    )
+    respuesta_final: str = Field(
+        ..., description="Response to the user in Colombian Spanish."
+    )
 
 
 GENERAL_SYSTEM_PROMPT = """\
@@ -30,18 +34,15 @@ that offers buy-now-pay-later installment plans.
 - Respond in natural Colombian Spanish, 2-4 sentences.
 - If you don't have enough information to answer, say so honestly."""
 
-general_prompt = ChatPromptTemplate.from_messages([
-    ("system", GENERAL_SYSTEM_PROMPT),
-    MessagesPlaceholder(variable_name="messages"),
-    ("human", "{question}"),
-])
+general_prompt = ChatPromptTemplate.from_messages(
+    [
+        ("system", GENERAL_SYSTEM_PROMPT),
+        MessagesPlaceholder(variable_name="messages"),
+        ("human", "{question}"),
+    ]
+)
 
 
 def get_general_chain():
     """Build and return the general agent chain with structured output."""
-    llm = ChatOpenAI(
-        model="gpt-4o-mini",
-        temperature=0,
-        api_key=os.getenv("OPENAI_API_KEY"),
-    )
-    return general_prompt | llm.with_structured_output(GeneralResponse)
+    return build_chain_with_fallback(general_prompt, GeneralResponse, temperature=0)
