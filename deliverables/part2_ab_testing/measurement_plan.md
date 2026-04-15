@@ -62,11 +62,13 @@ Results are available live at `GET /ab/feedback/summary` — the response includ
 - Minimum Detectable Effect: +5 pp (p_B = 0.75 would be meaningful in production)
 - α = 0.05 (two-tailed), power = 0.80
 - Required n ≈ **620 feedback entries per variant**
+$$n = \frac{(Z_{\alpha/2} + Z_{\beta})^2 \cdot [p_1(1-p_1) + p_2(1-p_2)]}{(p_1 - p_2)^2}$$
 
 **Secondary metrics** (latency, token count):
 - Test: two-sample Welch's t-test
 - MDE: 200 ms (≈ 10 % of expected 2 000 ms baseline), σ ≈ 600 ms
 - Required n ≈ 350 conversations per variant
+$$n = \frac{2 \cdot \sigma^2 \cdot (Z_{\alpha/2} + Z_{\beta})^2}{MDE^2}$$
 
 The **binding sample size** is 620 (adoption), because it is the larger requirement.
 
