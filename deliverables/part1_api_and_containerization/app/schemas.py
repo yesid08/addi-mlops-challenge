@@ -69,12 +69,12 @@ class ConversationHistoryResponse(BaseModel):
 
 
 class FeedbackRequest(BaseModel):
-    rating: Literal["good", "bad"] = Field(..., examples=["good"])
+    was_good: bool = Field(..., examples=[True])
 
 
 class FeedbackResponse(BaseModel):
     conversation_id: str
-    rating: str
+    was_good: bool
     ab_variant: str
     timestamp: str
 

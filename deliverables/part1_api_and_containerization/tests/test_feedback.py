@@ -73,7 +73,7 @@ class TestPostFeedback:
     async def test_good_rating_returns_200(self, feedback_client: AsyncClient) -> None:
         resp = await feedback_client.post(
             "/chat/conversations/conv-a/feedback",
-            json={"rating": "good"},
+            json={"was_good": True},
         )
         assert resp.status_code == 200
 
@@ -81,7 +81,7 @@ class TestPostFeedback:
     async def test_bad_rating_returns_200(self, feedback_client: AsyncClient) -> None:
         resp = await feedback_client.post(
             "/chat/conversations/conv-b/feedback",
-            json={"rating": "bad"},
+            json={"was_good": False},
         )
         assert resp.status_code == 200
 
@@ -89,11 +89,11 @@ class TestPostFeedback:
     async def test_response_schema(self, feedback_client: AsyncClient) -> None:
         resp = await feedback_client.post(
             "/chat/conversations/conv-a/feedback",
-            json={"rating": "good"},
+            json={"was_good": True},
         )
         body = resp.json()
         assert body["conversation_id"] == "conv-a"
-        assert body["rating"] == "good"
+        assert body["was_good"] is True
         assert body["ab_variant"] == "A"
         assert "timestamp" in body
 
@@ -103,7 +103,7 @@ class TestPostFeedback:
     ) -> None:
         resp = await feedback_client.post(
             "/chat/conversations/conv-b/feedback",
-            json={"rating": "good"},
+            json={"was_good": True},
         )
         assert resp.json()["ab_variant"] == "B"
 
@@ -113,7 +113,7 @@ class TestPostFeedback:
     ) -> None:
         resp = await feedback_client.post(
             "/chat/conversations/does-not-exist/feedback",
-            json={"rating": "good"},
+            json={"was_good": True},
         )
         assert resp.status_code == 404
 
@@ -123,7 +123,7 @@ class TestPostFeedback:
     ) -> None:
         resp = await feedback_client.post(
             "/chat/conversations/conv-a/feedback",
-            json={"rating": "meh"},
+            json={"was_good": "meh"},
         )
         assert resp.status_code == 422
 
@@ -152,10 +152,10 @@ class TestFeedbackSummary:
         # Submit some feedback
         for _ in range(3):
             await feedback_client.post(
-                "/chat/conversations/conv-a/feedback", json={"rating": "good"}
+                "/chat/conversations/conv-a/feedback", json={"was_good": True}
             )
         await feedback_client.post(
-            "/chat/conversations/conv-a/feedback", json={"rating": "bad"}
+            "/chat/conversations/conv-a/feedback", json={"was_good": False}
         )
 
         resp = await feedback_client.get("/ab/feedback/summary")
@@ -179,7 +179,7 @@ class TestFeedbackSummary:
             # Add only 5 entries to variant A, none to B.
             for _ in range(5):
                 await client.post(
-                    "/chat/conversations/conv-a/feedback", json={"rating": "good"}
+                    "/chat/conversations/conv-a/feedback", json={"was_good": True}
                 )
             resp = await client.get("/ab/feedback/summary")
             assert resp.json()["statistical_test"] is None
@@ -198,7 +198,7 @@ class TestFeedbackSummary:
                     conversation_id=f"c{i}",
                     user_id="user_001",
                     ab_variant="A",
-                    rating="good" if i < 9 else "bad",
+                    was_good=i < 9,
                 )
             )
         for i in range(12):
@@ -207,7 +207,7 @@ class TestFeedbackSummary:
                     conversation_id=f"d{i}",
                     user_id="user_002",
                     ab_variant="B",
-                    rating="good" if i < 7 else "bad",
+                    was_good=i < 7,
                 )
             )
         app_with_feedback.state.feedback_store = store
@@ -233,9 +233,9 @@ class TestFeedbackStore:
         from app.store.feedback_store import FeedbackEntry, FeedbackStore
 
         store = FeedbackStore()
-        store.record(FeedbackEntry("c1", "user_001", "A", "good"))
-        store.record(FeedbackEntry("c2", "user_001", "A", "bad"))
-        store.record(FeedbackEntry("c3", "user_002", "B", "good"))
+        store.record(FeedbackEntry("c1", "user_001", "A", True))
+        store.record(FeedbackEntry("c2", "user_001", "A", False))
+        store.record(FeedbackEntry("c3", "user_002", "B", True))
 
         summary = store.get_summary()
         assert summary["A"]["good"] == 1
@@ -256,9 +256,9 @@ class TestFeedbackStore:
         from app.store.feedback_store import FeedbackEntry, FeedbackStore
 
         store = FeedbackStore()
-        store.record(FeedbackEntry("c1", "user_001", "A", "good"))
-        store.record(FeedbackEntry("c2", "user_001", "A", "good"))
-        store.record(FeedbackEntry("c3", "user_001", "A", "bad"))
+        store.record(FeedbackEntry("c1", "user_001", "A", True))
+        store.record(FeedbackEntry("c2", "user_001", "A", True))
+        store.record(FeedbackEntry("c3", "user_001", "A", False))
 
         summary = store.get_summary()
         assert summary["A"]["good_rate"] == round(2 / 3, 4)

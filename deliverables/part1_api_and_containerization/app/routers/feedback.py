@@ -58,20 +58,20 @@ async def post_feedback(
         conversation_id=conversation_id,
         user_id=metadata["user_id"],
         ab_variant=metadata["ab_variant"],
-        rating=body.rating,
+        was_good=body.was_good,
     )
     feedback_store.record(entry)
 
     logger.info(
-        "Feedback recorded | conversation=%s | variant=%s | rating=%s",
+        "Feedback recorded | conversation=%s | variant=%s | was_good=%s",
         conversation_id,
         entry.ab_variant,
-        body.rating,
+        body.was_good,
     )
 
     return FeedbackResponse(
         conversation_id=conversation_id,
-        rating=body.rating,
+        was_good=body.was_good,
         ab_variant=entry.ab_variant,
         timestamp=entry.timestamp,
     )

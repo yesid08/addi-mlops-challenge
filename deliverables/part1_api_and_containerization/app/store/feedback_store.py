@@ -16,7 +16,7 @@ import math
 import threading
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Literal
+from typing import Any
 
 
 @dataclass
@@ -24,7 +24,7 @@ class FeedbackEntry:
     conversation_id: str
     user_id: str
     ab_variant: str
-    rating: Literal["good", "bad"]
+    was_good: bool
     timestamp: str = field(
         default_factory=lambda: datetime.now(timezone.utc).isoformat()
     )
@@ -115,7 +115,7 @@ class FeedbackStore:
         }
         for e in entries:
             if e.ab_variant in counts:
-                counts[e.ab_variant][e.rating] += 1
+                counts[e.ab_variant]["good" if e.was_good else "bad"] += 1
 
         summary: dict[str, Any] = {}
         for variant in ("A", "B"):
