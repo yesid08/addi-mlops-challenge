@@ -72,9 +72,13 @@ async def post_chat(request: Request, body: ChatRequest) -> ChatResponse:
         )
     except asyncio.TimeoutError:
         logger.warning(
-            "LLM timeout after %ss | correlation_id=%s",
-            settings.chat_timeout_seconds,
-            correlation_id,
+            "chat_timeout",
+            extra={
+                "timeout_seconds": settings.chat_timeout_seconds,
+                "correlation_id": correlation_id,
+                "user_id": body.user_id,
+                "conversation_id": body.conversation_id,
+            },
         )
         raise HTTPException(
             status_code=504,
@@ -86,9 +90,13 @@ async def post_chat(request: Request, body: ChatRequest) -> ChatResponse:
         )
     except Exception as exc:
         logger.exception(
-            "Graph invocation failed | correlation_id=%s | error=%s",
-            correlation_id,
-            exc,
+            "chat_error",
+            extra={
+                "correlation_id": correlation_id,
+                "error": str(exc),
+                "user_id": body.user_id,
+                "conversation_id": body.conversation_id,
+            },
         )
         raise HTTPException(
             status_code=502,
@@ -110,12 +118,14 @@ async def post_chat(request: Request, body: ChatRequest) -> ChatResponse:
     history_store.set_metadata(body.conversation_id, body.user_id, variant)
 
     logger.info(
-        "Chat OK | user=%s | conversation=%s | variant=%s | flow=%s | correlation_id=%s",
-        body.user_id,
-        body.conversation_id,
-        variant,
-        result.get("flow"),
-        correlation_id,
+        "chat_ok",
+        extra={
+            "user_id": body.user_id,
+            "conversation_id": body.conversation_id,
+            "variant": variant,
+            "flow": result.get("flow"),
+            "correlation_id": correlation_id,
+        },
     )
 
     return ChatResponse(
