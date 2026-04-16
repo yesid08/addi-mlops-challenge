@@ -167,7 +167,33 @@ Three dashboard layers, each with its own time granularity and audience.
 
 ---
 
-## 4.5 — SLOs and SLIs
+## 4.5 — LLM Output Drift Detection
+
+Model degradation in production LLM systems rarely announces itself with a spike in HTTP 5xx errors. The more common pattern is **silent drift**: the model begins producing subtly shorter, less specific, or tonally different responses over days or weeks — invisible to latency and error rate monitors, but eroding user experience. The following signals detect drift independently of explicit user feedback.
+
+**What to measure**
+
+| Signal | Method | Alert threshold |
+|---|---|---|
+| Response length distribution | Track p50 and p95 of `completion_tokens` per turn as a 7-day rolling window | Warning if p50 shifts > 20% from baseline; Critical if > 40% |
+| Semantic similarity to baseline | Embed `respuesta_final` outputs with a lightweight model (e.g., `text-embedding-3-small`). Compute cosine similarity between each response and the centroid of the first 7-day baseline window | Warning if 7-day rolling mean similarity drops below 0.80; Critical below 0.70 |
+| Topic distribution drift | Expected KB topic distribution (PEDIDOS, PAGOS, DEVOLUCIONES, etc.) computed from first 30 days of production traffic. Compare weekly observed distribution using KL divergence | Warning if KL divergence > 0.1; investigate if > 0.2 |
+| Vocabulary shift | Track the top-50 token n-grams in `respuesta_final` weekly. Sudden appearance of new high-frequency tokens (e.g., English phrases in a Spanish-language bot) signals prompt contamination or model update | Manual review triggered on any top-10 token change |
+| RAGAS quality metrics | Sample 1% of production turns; evaluate faithfulness, answer relevance, and context precision against the knowledge base using RAGAS or DeepEval in an async batch job | Alert if faithfulness drops below 0.80 on weekly sample |
+
+**Baseline and rebase policy**
+
+The reference distribution is established from the first 7 days of stable production traffic after a clean deployment. When a new version is promoted to 100%, the baseline is frozen at that point — not updated continuously — so drift is always measured against the last known-good behavior, not against a moving average that silently absorbs degradation.
+
+After a deliberate model change (e.g., a prompt update or temperature change), the baseline is explicitly rebased: the old baseline is archived with a timestamp, and the new 7-day window begins. This ensures drift alerts are not suppressed by intentional changes and that historical baselines remain available for post-mortem analysis.
+
+**Integration with alert rules**
+
+Drift signals feed directly into Alert #6 (BERT negative sentiment) and the quality SLO track in Section 4.5. A sustained drop in semantic similarity without a recent deployment is escalated as an ML incident — not an operational one — and triggers the investigation-first response track: automated root-cause report, sampling of affected conversations, comparison against the frozen baseline.
+
+---
+
+## 4.6 — SLOs and SLIs
 
 | SLI | Target SLO | Measurement Method |
 |-----|------------|--------------------|
