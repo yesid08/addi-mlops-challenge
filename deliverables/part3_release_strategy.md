@@ -53,6 +53,18 @@ A dedicated monitoring service runs as its own container, separate from the API 
 
 This separation means the rollback path does not involve redeploying any container — it is a single load balancer configuration update. If the monitoring service itself crashes, the safe default is to leave traffic frozen at its current split until the service recovers.
 
+**Automated promotion and rollback criteria.**
+
+The monitoring service makes decisions based on explicit, pre-agreed thresholds — not human judgment at decision time. Criteria are evaluated at each cycle boundary (every 2 hours, minimum 200 requests served):
+
+| Decision | Conditions (ALL must be true for promotion; ANY triggers rollback) |
+|---|---|
+| **Promote** (+5% traffic) | Error rate < 1% over window AND p95 latency ≤ 110% of baseline AND tokens/turn ≤ 120% of baseline AND ≥ 200 requests served AND ≥ 2 h elapsed since last change |
+| **Freeze** (hold current split) | Any metric in Light or Moderate degradation tier (5–20% regression) but no Critical breach |
+| **Rollback** (0% canary immediately) | Error rate > 20% regression OR p95 latency > 20% regression OR explicit negative feedback rate > 15% OR any LLM API error rate spike > 3× baseline |
+
+Baselines are computed from the last 7 days of stable Version A traffic. The `AB_TREATMENT_TRAFFIC_PCT` environment variable is updated by the monitoring service via the container orchestration API — no redeployment required, consistent with the configurable split design from Part 2. Automated promotion decisions are logged as audit events with the metric snapshot that triggered them, so every traffic change is traceable without manual intervention.
+
 **Version-agnostic state schema.**
 
 With weighted load balancing, a single user's conversation can cross versions between turns — turn 1 is handled by Version A, turn 2 by Version B, depending on which container the load balancer selects. This is not a hypothetical edge case; it will happen in any stateless routing setup.
