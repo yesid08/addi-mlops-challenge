@@ -4,6 +4,8 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
+from app.context import correlation_id_var
+
 
 class CorrelationIdMiddleware(BaseHTTPMiddleware):
     """Injects a correlation ID into request.state and the response header.
@@ -16,6 +18,7 @@ class CorrelationIdMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next) -> Response:
         correlation_id = request.headers.get("X-Correlation-ID") or str(uuid.uuid4())
         request.state.correlation_id = correlation_id
+        correlation_id_var.set(correlation_id)
         response = await call_next(request)
         response.headers["X-Correlation-ID"] = correlation_id
         return response

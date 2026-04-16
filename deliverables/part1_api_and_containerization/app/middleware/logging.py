@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
-    """Logs each request: method, path, status code, duration, and correlation ID."""
+    """Logs each request as a structured JSON entry with method, path, status, duration, and correlation ID."""
 
     async def dispatch(self, request: Request, call_next) -> Response:
         start = time.monotonic()
@@ -17,11 +17,13 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         duration_ms = round((time.monotonic() - start) * 1000, 1)
         correlation_id = getattr(request.state, "correlation_id", "-")
         logger.info(
-            "%s %s %s %.1fms correlation_id=%s",
-            request.method,
-            request.url.path,
-            response.status_code,
-            duration_ms,
-            correlation_id,
+            "http_request",
+            extra={
+                "method": request.method,
+                "path": request.url.path,
+                "status": response.status_code,
+                "duration_ms": duration_ms,
+                "correlation_id": correlation_id,
+            },
         )
         return response

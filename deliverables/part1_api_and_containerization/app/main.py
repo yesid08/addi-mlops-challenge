@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.exception_handlers import general_error_handler, validation_error_handler
+from app.logging_config import setup_logging
 from app.middleware.correlation import CorrelationIdMiddleware
 from app.middleware.logging import RequestLoggingMiddleware
 from app.routers import ab_config, chat, feedback, health
@@ -21,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    logging.basicConfig(level=settings.log_level)
+    setup_logging(settings.log_level)
 
     # Ensure OPENAI_API_KEY is available in os.environ for LangChain/OpenAI clients
     os.environ.setdefault("OPENAI_API_KEY", settings.openai_api_key)
