@@ -84,6 +84,7 @@ ml_ops_challenge/
     |-- part4_observability.md          # Monitoring, alerts, SLOs
     |-- part5_production_readiness.md   # State, security, cost, scaling
     |-- part6_architecture_reasoning.md # Cognitive architecture & latency analysis
+    |-- part7_clarification.md           # 🔍 Clarification for reviewers — read this!!!!!
 ```
 
 ---
@@ -276,6 +277,14 @@ The bot currently processes everything synchronously and sequentially. Propose a
 - Any other approach you think is valuable
 
 Describe the change, draw the modified graph (text/ASCII/Mermaid is fine), explain the trade-offs, and estimate the expected improvement.
+
+---
+
+### Part 7 — A Note for the Reviewers: What We Didn't Build (and Why It Matters)
+
+> **"The best architecture is the one you can explain — including what you chose not to build."**
+
+The API delivered in Parts 1–6 uses HTTP REST. This was intentional. But for a conversational AI messaging service, the *ideal* transport layer looks very different. Read `deliverables/part7_clarification.md` to understand the full picture: why WebSockets + Redis beat both REST polling and SQS queues for real-time conversation, how bucket-ticketing with exponential backoff prevents internal thundering-herd at 10 000 concurrent users, and how ECS Fargate auto-scales based on alive connections — all without adding a single new infrastructure dependency.
 
 ---
 
